@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>פוקר חברים</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        margin: 0;
+        background: #f0f0f0;
+    }
+
+    h1 {
+        text-align: center;
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    th, td {
+        border: 1px solid #ccc;
+        padding: 12px;
+        text-align: center;
+        font-size: 16px;
+    }
+
+    input {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        box-sizing: border-box;
+        border-radius: 5px;
+        border: 1px solid #aaa;
+    }
+
+    button {
+        background-color: #2f80ed;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 18px;
+        margin: 5px 2px;
+        cursor: pointer;
+        width: 100%;
+        max-width: 250px;
+    }
+
+    button:hover {
+        background-color: #1c60c7;
+    }
+
+    #results {
+        background: #ffffff;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 20px;
+        font-size: 18px;
+    }
+
+    ul {
+        padding-right: 20px;
+    }
+
+    a {
+        display: inline-block;
+        margin-top: 10px;
+        text-decoration: none;
+        background: #25D366;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 16px;
+    }
+
+    @media (max-width: 600px) {
+        h1 {
+            font-size: 20px;
+        }
+
+        th, td {
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        input {
+            font-size: 14px;
+            padding: 8px;
+        }
+
+        button {
+            font-size: 16px;
+            padding: 10px;
+        }
+
+        a {
+            font-size: 14px;
+        }
+    }
+</style>
+</head>
+<body>
+
+<h1>פוקר חברים 💸</h1>
+
+<table id="playerTable">
+    <thead>
+        <tr>
+            <th>שם</th>
+            <th>כניסה</th>
+            <th>יציאה</th>
+            <th>🗑️</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><input type="text" placeholder="שם"></td>
+            <td><input type="number" placeholder="כניסה"></td>
+            <td><input type="number" placeholder="יציאה"></td>
+            <td><button onclick="removeRow(this)">X</button></td>
+        </tr>
+    </tbody>
+</table>
+
+<button onclick="addRow()">➕ הוסף שחקן</button>
+<button onclick="calculate()">💰 חשב</button>
+<button onclick="resetTable()">🧹 אפס</button>
+
+<div id="results"></div>
+
+<script>
+    function addRow() {
+        const table = document.getElementById("playerTable").getElementsByTagName('tbody')[0];
+        const row = table.insertRow();
+        for (let i = 0; i < 3; i++) {
+            const cell = row.insertCell();
+            const input = document.createElement("input");
+            input.type = i === 0 ? "text" : "number";
+            input.placeholder = i === 0 ? "שם" : (i === 1 ? "כניסה" : "יציאה");
+            cell.appendChild(input);
+        }
+        const cell = row.insertCell();
+        const btn = document.createElement("button");
+        btn.textContent = "X";
+        btn.onclick = function () {
+            removeRow(btn);
+        };
+        cell.appendChild(btn);
+    }
+
+    function removeRow(btn) {
+        const row = btn.parentNode.parentNode;
+        row.parentNode.removeChild(row);
+    }
+
+    function resetTable() {
+        const tbody = document.getElementById("playerTable").getElementsByTagName('tbody')[0];
+        tbody.innerHTML = '';
+        addRow();
+        document.getElementById("results").innerHTML = '';
+    }
+
+    function calculate() {
+        const rows = document.querySelectorAll("#playerTable tbody tr");
+        const data = [];
+
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll("input");
+            const name = inputs[0].value.trim();
+            const buy_in = inputs[1].value;
+            const cash_out = inputs[2].value;
+
+            if (name !== "") {
+                data.push({ name, buy_in, cash_out });
+            }
+        });
+
+        fetch('/calculate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(results => {
+            const output = results.map(r => `<li>${r}</li>`).join('');
+            document.getElementById("results").innerHTML = `
+                <h3>התחשבנות:</h3>
+                <ul>${output}</ul>
+                <a href="https://wa.me/?text=${encodeURIComponent(results.join('\n'))}" target="_blank">📤 שלח בווטסאפ</a>
+            `;
+        });
+    }
+</script>
+
+</body>
+</html>
